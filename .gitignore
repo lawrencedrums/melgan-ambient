@@ -1,0 +1,8 @@
+# dataset
+/wavs
+/wavs_city
+/wavs_forest
+/wavs_storm
+
+# venv file
+/melgan
