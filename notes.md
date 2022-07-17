@@ -31,7 +31,7 @@ create - `python3 -m venv melgan`
 `ls *.wav | tail -n+10 > train_files.txt`
 `ls *.wav | head -n10 > test_files.txt`
 
-`python scripts/train.py --save_path logs/baseline --data_path wavs`
+`python3 scripts/train.py --save_path logs/baseline --data_path wavs`
 
 https://library.soundfield.com/browse/Ambience
 https://github.com/descriptinc/melgan-neurips

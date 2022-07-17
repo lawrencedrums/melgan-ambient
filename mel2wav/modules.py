@@ -5,6 +5,13 @@ from librosa.filters import mel as librosa_mel_fn
 from torch.nn.utils import weight_norm
 import numpy as np
 
+from interface import get_default_device
+
+from nvidia.dali import pipeline_def
+import nvidia.dali.fn as fn
+import nvidia.dali.types as types
+import nvidia.dali as dali
+
 
 def weights_init(m):
     classname = m.__class__.__name__
@@ -21,6 +28,15 @@ def WNConv1d(*args, **kwargs):
 
 def WNConvTranspose1d(*args, **kwargs):
     return weight_norm(nn.ConvTranspose1d(*args, **kwargs))
+
+
+@pipeline_def
+def spectrogram_pipe(nfft, window_length, window_step, audio, device='cpu'):
+    audio = types.Constant(device=device, value=audio)
+    spectrogram = fn.spectrogram(audio, device=device, nfft=nfft,
+                                 window_length=window_length,
+                                 window_step=window_step)
+    return spectrogram
 
 
 class Audio2Mel(nn.Module):
@@ -54,15 +70,30 @@ class Audio2Mel(nn.Module):
     def forward(self, audio):
         p = (self.n_fft - self.hop_length) // 2
         audio = F.pad(audio, (p, p), "reflect").squeeze(1)
-        fft = torch.stft(
-            audio,
-            n_fft=self.n_fft,
-            hop_length=self.hop_length,
-            win_length=self.win_length,
-            window=self.window,
-            center=False,
-            return_complex=False,
-        )
+
+        use_dali = True
+        if use_dali:
+            pipe = spectrogram_pipe(
+                audio,
+                nfft=self.n_fft,
+                device='gpu',
+                window_length=self.win_length,
+                window_step=self.hop_length,
+            )
+            pipe.bulid()
+            outputs = pipe.run()
+            fft = outputs[0][0].as_cpu()
+        else:
+            fft = torch.stft(
+                audio,
+                n_fft=self.n_fft,
+                hop_length=self.hop_length,
+                win_length=self.win_length,
+                window=self.window,
+                center=False,
+                return_complex=False,
+            )
+
         real_part, imag_part = fft.unbind(-1)
         magnitude = torch.sqrt(real_part ** 2 + imag_part ** 2)
         mel_output = torch.matmul(self.mel_basis, magnitude)
