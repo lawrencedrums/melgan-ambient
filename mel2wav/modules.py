@@ -30,11 +30,11 @@ def WNConvTranspose1d(*args, **kwargs):
 
 @pipeline_def
 def mel_spectrogram_pipe(nfft, window_length, window_step, audio, device='cpu'):
-    audio = types.Constant(device=device, value=audio_data)
-    spectrogram = fn.spectrogram(audio, device=device, nfft=nfft,
+    audio = types.Constant(device=device, value=audio)
+    spectrogram = fn.spectrogram(audio=audio, device=device, nfft=nfft,
                                  window_length=window_length,
                                  window_step=window_step)
-    mel_spectrogram = fn.mel_filter_bank(spectrogram, sample_rate=sr, nfilter = 128, freq_high = 8000.0)
+    mel_spectrogram = fn.mel_filter_bank(spectrogram, sample_rate=22050, nfilter = 128, freq_high = 8000.0)
     mel_spectrogram_dB = fn.to_decibels(mel_spectrogram, multiplier = 10.0, cutoff_db = -80)
     return mel_spectrogram_dB
 
@@ -75,6 +75,9 @@ class Audio2Mel(nn.Module):
         if use_dali:
             pipe = mel_spectrogram_pipe(
                 audio=audio,
+                batch_size=1,
+                num_threads=3,
+                device_id=0,
                 nfft=self.n_fft,
                 device='gpu',
                 window_length=self.win_length,
