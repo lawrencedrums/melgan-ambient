@@ -8,6 +8,7 @@ import numpy as np
 from nvidia.dali import pipeline_def
 import nvidia.dali.fn as fn
 import nvidia.dali.types as types
+import nvidia.dali.plugin.pytorch as dali_torch
 import nvidia.dali as dali
 
 
@@ -31,7 +32,7 @@ def WNConvTranspose1d(*args, **kwargs):
 @pipeline_def
 def mel_spectrogram_pipe(nfft, window_length, window_step, audio, device='cpu'):
     audio = types.Constant(device=device, value=audio)
-    spectrogram = fn.spectrogram(audio=audio, device=device, nfft=nfft,
+    spectrogram = fn.spectrogram(audio, device=device, nfft=nfft,
                                  window_length=window_length,
                                  window_step=window_step)
     mel_spectrogram = fn.mel_filter_bank(spectrogram, sample_rate=22050, nfilter = 128, freq_high = 8000.0)
@@ -71,7 +72,7 @@ class Audio2Mel(nn.Module):
         p = (self.n_fft - self.hop_length) // 2
         audio = F.pad(audio, (p, p), "reflect").squeeze(1)
 
-        use_dali = True
+        use_dali = False
         if use_dali:
             pipe = mel_spectrogram_pipe(
                 audio=audio,
@@ -85,23 +86,24 @@ class Audio2Mel(nn.Module):
             )
             pipe.build()
             outputs = pipe.run()
-            mel_spec_dali_db = np.array(outputs[0][0].as_cpu())
+            mel_spec_dali_db = outputs[0][0].as_cpu()
+            mel_spec_tensor = torch.empty(mel_spec_dali_db.shape())
             return mel_spec_dali_db
-        else:
-            fft = torch.stft(
-                audio,
-                n_fft=self.n_fft,
-                hop_length=self.hop_length,
-                win_length=self.win_length,
-                window=self.window,
-                center=False,
-                return_complex=False,
-            )
-            real_part, imag_part = fft.unbind(-1)
-            magnitude = torch.sqrt(real_part ** 2 + imag_part ** 2)
-            mel_output = torch.matmul(self.mel_basis, magnitude)
-            log_mel_spec = torch.log10(torch.clamp(mel_output, min=1e-5))
-            return log_mel_spec
+
+        fft = torch.stft(
+            audio,
+            n_fft=self.n_fft,
+            hop_length=self.hop_length,
+            win_length=self.win_length,
+            window=self.window,
+            center=False,
+            return_complex=False,
+        )
+        real_part, imag_part = fft.unbind(-1)
+        magnitude = torch.sqrt(real_part ** 2 + imag_part ** 2)
+        mel_output = torch.matmul(self.mel_basis, magnitude)
+        log_mel_spec = torch.log10(torch.clamp(mel_output, min=1e-5))
+        return log_mel_spec
 
 
 class ResnetBlock(nn.Module):

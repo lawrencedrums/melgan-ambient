@@ -2,6 +2,9 @@ import torch
 import torch.utils.data
 import torch.nn.functional as F
 
+import os
+os.environ['LIBROSA_CACHE_DIR'] = '/tmp/librosa_cache'
+os.environ['LIBROSA_CACHE_LEVEL'] = '50'
 from librosa.core import load
 from librosa.util import normalize
 
