@@ -67,7 +67,8 @@ class AudioDataset(torch.utils.data.Dataset):
         """
         use_dali = False
         if use_dali:
-            data, sampling_rate = fn.decoders.audio(full_path, dtype=types.FLOAT)
+            encoded, _ = fn.readers.file(full_path)
+            data, sampling_rate = fn.decoders.audio(encoded, dtype=types.FLOAT)
             data = 0.95 * fn.normalize(data)
         else:
             data, sampling_rate = load(full_path, sr=self.sampling_rate)
