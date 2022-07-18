@@ -10,6 +10,7 @@ from librosa.util import normalize
 
 from pathlib import Path
 import nvidia.dali.fn as fn
+import nvidia.dali.types as types
 import numpy as np
 import random
 
