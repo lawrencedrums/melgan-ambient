@@ -9,6 +9,7 @@ from librosa.core import load
 from librosa.util import normalize
 
 from pathlib import Path
+import nvidia.dali.fn as fn
 import numpy as np
 import random
 
@@ -63,8 +64,13 @@ class AudioDataset(torch.utils.data.Dataset):
         """
         Loads wavdata into torch array
         """
-        data, sampling_rate = load(full_path, sr=self.sampling_rate)
-        data = 0.95 * normalize(data)
+        use_dali = False
+        if use_dali:
+            data, sampling_rate = fn.decoders.audio(full_path, dtype=types.FLOAT)
+            data = 0.95 * fn.normalize(data)
+        else:
+            data, sampling_rate = load(full_path, sr=self.sampling_rate)
+            data = 0.95 * normalize(data)
 
         if self.augment:
             amplitude = np.random.uniform(low=0.3, high=1.0)
