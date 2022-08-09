@@ -9,7 +9,7 @@ from mel2wav.utils import save_sample
 import torch
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
-from torch.utils.tensorboard import SummaryWriter
+# from torch.utils.tensorboard import SummaryWriter
 
 import yaml
 import numpy as np
@@ -35,10 +35,10 @@ def parse_args():
     parser.add_argument("--cond_disc", action="store_true")
 
     parser.add_argument("--data_path", default=None, type=Path)
-    parser.add_argument("--batch_size", type=int, default=16)
+    parser.add_argument("--batch_size", type=int, default=32)
     parser.add_argument("--seq_len", type=int, default=8192)
 
-    parser.add_argument("--epochs", type=int, default=3000)
+    parser.add_argument("--epochs", type=int, default=800)
     parser.add_argument("--log_interval", type=int, default=100)
     parser.add_argument("--save_interval", type=int, default=1000)
     parser.add_argument("--n_test_samples", type=int, default=8)
@@ -60,7 +60,7 @@ def main():
     ####################################
     with open(root / "args.yml", "w") as f:
         yaml.dump(args, f)
-    writer = SummaryWriter(str(root))
+    # writer = SummaryWriter(str(root))
 
     #######################
     # Load PyTorch Models #
@@ -116,7 +116,7 @@ def main():
 
         audio = x_t.squeeze().cpu()
         save_sample(root / ("original_%d.wav" % i), 22050, audio)
-        writer.add_audio("original/sample_%d.wav" % i, audio, 0, sample_rate=22050)
+        # writer.add_audio("original/sample_%d.wav" % i, audio, 0, sample_rate=22050)
 
         if i == args.n_test_samples - 1:
             break
@@ -182,10 +182,10 @@ def main():
             ######################
             costs.append([loss_D.item(), loss_G.item(), loss_feat.item(), s_error])
 
-            writer.add_scalar("loss/discriminator", costs[-1][0], steps)
-            writer.add_scalar("loss/generator", costs[-1][1], steps)
-            writer.add_scalar("loss/feature_matching", costs[-1][2], steps)
-            writer.add_scalar("loss/mel_reconstruction", costs[-1][3], steps)
+            # writer.add_scalar("loss/discriminator", costs[-1][0], steps)
+            # writer.add_scalar("loss/generator", costs[-1][1], steps)
+            # writer.add_scalar("loss/feature_matching", costs[-1][2], steps)
+            # writer.add_scalar("loss/mel_reconstruction", costs[-1][3], steps)
             steps += 1
 
             if steps % args.save_interval == 0:
@@ -195,12 +195,12 @@ def main():
                         pred_audio = netG(voc)
                         pred_audio = pred_audio.squeeze().cpu()
                         save_sample(root / ("generated_%d.wav" % i), 22050, pred_audio)
-                        writer.add_audio(
-                            "generated/sample_%d.wav" % i,
-                            pred_audio,
-                            epoch,
-                            sample_rate=22050,
-                        )
+                        # writer.add_audio(
+                        #     "generated/sample_%d.wav" % i,
+                        #     pred_audio,
+                        #     epoch,
+                        #     sample_rate=22050,
+                        # )
 
                 torch.save(netG.state_dict(), root / "netG.pt")
                 torch.save(optG.state_dict(), root / "optG.pt")
