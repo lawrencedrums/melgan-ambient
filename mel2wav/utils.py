@@ -1,4 +1,5 @@
 import scipy.io.wavfile
+import soundfile as sf
 
 
 def save_sample(file_path, sampling_rate, audio):
@@ -10,4 +11,6 @@ def save_sample(file_path, sampling_rate, audio):
         audio (torch.FloatTensor): torch array containing audio in [-1, 1]
     """
     audio = (audio.numpy() * 32768).astype("int16")
-    scipy.io.wavfile.write(file_path, sampling_rate, audio)
+
+    # scipy.io.wavfile.write(file_path, sampling_rate, audio)
+    sf.write(file_path, audio, sampling_rate)
