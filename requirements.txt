@@ -4,3 +4,5 @@ pyyaml
 scipy
 argparse
 tensorboard
+pydub
+ffmpeg
