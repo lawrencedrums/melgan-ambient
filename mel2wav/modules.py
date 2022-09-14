@@ -24,6 +24,9 @@ def WNConvTranspose1d(*args, **kwargs):
 
 
 class Audio2Mel(nn.Module):
+    """
+    Calculates Mel-spectrogram from audio
+    """
     def __init__(
         self,
         n_fft=1024,
@@ -71,6 +74,9 @@ class Audio2Mel(nn.Module):
 
 
 class ResnetBlock(nn.Module):
+    """
+    Class for a single residual block.
+    """
     def __init__(self, dim, dilation=1):
         super().__init__()
         self.block = nn.Sequential(
@@ -132,6 +138,9 @@ class Generator(nn.Module):
 
 
 class NLayerDiscriminator(nn.Module):
+    """
+    This class handles creating the multi-scale discriminator.
+    """
     def __init__(self, ndf, n_layers, downsampling_factor):
         super().__init__()
         model = nn.ModuleDict()
@@ -181,6 +190,9 @@ class NLayerDiscriminator(nn.Module):
 
 
 class Discriminator(nn.Module):
+    """
+    Main discriminator class.
+    """
     def __init__(self, num_D, ndf, n_layers, downsampling_factor):
         super().__init__()
         self.model = nn.ModuleDict()

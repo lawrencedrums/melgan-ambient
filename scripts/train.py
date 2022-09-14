@@ -60,7 +60,6 @@ def main():
     ####################################
     with open(root / "args.yml", "w") as f:
         yaml.dump(args, f)
-    # writer = SummaryWriter(str(root))
 
     #######################
     # Load PyTorch Models #
@@ -114,9 +113,8 @@ def main():
         test_voc.append(s_t.to(device))
         test_audio.append(x_t)
 
-        audio = x_t.squeeze().cpu()
+        audio = x_t.squeeze().to(device)
         save_sample(root / ("original_%d.wav" % i), 22050, audio)
-        # writer.add_audio("original/sample_%d.wav" % i, audio, 0, sample_rate=22050)
 
         if i == args.n_test_samples - 1:
             break
@@ -177,15 +175,8 @@ def main():
             (loss_G + args.lambda_feat * loss_feat).backward()
             optG.step()
 
-            ######################
-            # Update tensorboard #
-            ######################
             costs.append([loss_D.item(), loss_G.item(), loss_feat.item(), s_error])
 
-            # writer.add_scalar("loss/discriminator", costs[-1][0], steps)
-            # writer.add_scalar("loss/generator", costs[-1][1], steps)
-            # writer.add_scalar("loss/feature_matching", costs[-1][2], steps)
-            # writer.add_scalar("loss/mel_reconstruction", costs[-1][3], steps)
             steps += 1
 
             if steps % args.save_interval == 0:
@@ -193,14 +184,8 @@ def main():
                 with torch.no_grad():
                     for i, (voc, _) in enumerate(zip(test_voc, test_audio)):
                         pred_audio = netG(voc)
-                        pred_audio = pred_audio.squeeze().cpu()
+                        pred_audio = pred_audio.squeeze().to(device)
                         save_sample(root / ("generated_%d.wav" % i), 22050, pred_audio)
-                        # writer.add_audio(
-                        #     "generated/sample_%d.wav" % i,
-                        #     pred_audio,
-                        #     epoch,
-                        #     sample_rate=22050,
-                        # )
 
                 torch.save(netG.state_dict(), root / "netG.pt")
                 torch.save(optG.state_dict(), root / "optG.pt")
